@@ -1,0 +1,145 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: tomcat-RedHat.yml                                                 #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install Tomcat webserver on RHEL.                 #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+
+###############################################################################
+#Task to add EPEL repository                                                  #
+###############################################################################
+- name: Add EPEL repository
+  yum:
+    name: epel-release
+    state: present
+
+###############################################################################
+#Task to install required packages                                            #
+###############################################################################
+- name: Installing basic packages
+  package:
+    name: ['vim','bash-completion','tree','wget','unzip','curl']
+    state: present
+
+###############################################################################
+#Task to install required JDK                                                 #
+###############################################################################
+- name: Installing Java 8 JDK
+  yum:
+    name: java-1.8.0-openjdk
+    state: present
+
+###############################################################################
+#Task to add Tomcat group to server                                           #
+###############################################################################
+- name: Adding tomcat group to server
+  group:
+    name: tomcat
+
+###############################################################################
+#Task to add Tomcat user to server                                            #
+###############################################################################
+- name: Adding "tomcat" user
+  user:
+    name: tomcat
+    group: tomcat
+    home: /usr/share/tomcat
+    createhome: no
+    system: yes
+
+###############################################################################
+#Task to download the Tomcat package                                          #
+###############################################################################
+- name: Downloading Tomcat package
+  get_url:
+    url: "{{ tomcat_archive_url }}"
+    dest: "{{ tomcat_archive_dest }}"
+
+###############################################################################
+#Task to create Tomcat directory                                              #
+###############################################################################
+- name: Creating tomcat directory
+  file:
+    path: /usr/share/tomcat
+    state: directory
+    owner: tomcat
+    group: tomcat
+
+###############################################################################
+#Task to extract the downloaded package                                       #
+###############################################################################
+- name: Extract the downloaded tomcat archive
+  unarchive:
+    src: "{{ tomcat_archive_dest }}"
+    dest: /usr/share/tomcat
+    owner: tomcat
+    group: tomcat
+    remote_src: yes
+    extra_opts: "--strip-components=1"
+    creates: /usr/share/tomcat/bin
+
+###############################################################################
+#Task to copy the template files                                              #
+###############################################################################
+- name: Copying tomcat template files to desired location
+  template:
+    src: templates/tomcat.service.j2
+    dest: /etc/systemd/system/tomcat.service
+  when: ansible_service_mgr == "systemd"
+
+###############################################################################
+#Task to start and enable Tomcat server                                       #
+###############################################################################
+- name: Starting Tomcat server
+  service:
+    daemon_reload: yes
+    name: tomcat
+    state: started
+    enabled: yes
+  when: ansible_service_mgr == "systemd"
+
+###############################################################################
+#Task to enable firewall for tomcat                                           #
+###############################################################################
+- name: Start and enable firewalld
+  service:
+    name: firewalld
+    state: started
+    enabled: yes
+  when: ansible_service_mgr == "systemd"
+
+###############################################################################
+#Task to map firewall port with Tomcat webserver                              #
+###############################################################################
+- name: Configuring firewall port on Tomcat server
+  firewalld:
+    port: 8080/tcp
+    permanent: true
+    state: enabled
+    immediate: yes
+  when: ansible_service_mgr == "systemd"
+
+###############################################################################
+#Task to setup user credentials                                               #
+###############################################################################
+- name: Setting up UI access credentials
+  template:
+    src: tomcat-users.xml.j2
+    dest: /usr/share/tomcat/conf/tomcat-users.xml
+  notify: restart tomcat
+
+###############################################################################
+#Task to allow access to Manager from any IP address                          #
+###############################################################################
+- name: Allow access to Manager and Host Manager apps from any IP
+  template:
+    src: context.xml.j2 
+    dest: "{{ item }}"
+  with_items:
+    - /usr/share/tomcat/webapps/host-manager/META-INF/context.xml
+    - /usr/share/tomcat/webapps/manager/META-INF/context.xml
+  notify: restart tomcat

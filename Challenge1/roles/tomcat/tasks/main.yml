@@ -1,0 +1,24 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: main.yml                                                          #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install Tomcat webserver on RHEL.                 #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+---
+###############################################################################
+#Task to export variable and call the tasks based on OS family                #
+###############################################################################
+- name: Add the OS specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_os_family }}.yml"
+
+###############################################################################
+#Tasks to include installation steps                                          #
+###############################################################################
+- include_tasks: "tomcat-{{ ansible_os_family }}.yml"

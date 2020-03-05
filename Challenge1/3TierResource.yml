@@ -1,0 +1,57 @@
+###############################################################################
+#Ansible Playbook for KPMG Challenge                                          #
+#File Name: 3TierResource.yml                                                 #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Ssript : To create 3 tier architecture resources              #
+###############################################################################
+---
+###############################################################################
+#Play to prepare and install Frontend Webserver on given host                 #
+#This installation is a sample for RHEL flavor which can be extended to       #
+#other OS families                                                            #
+###############################################################################
+- name: Play to install Frontend Tomcat webserver
+  hosts: <Inventory host / groupname>               # Inventory hosts group / server to act on
+  become: yes                                       # To accquire escalation privileges
+  become_method: sudo                               # Set become method
+  remote_user: root                                 # Update username for remote server
+  vars:                                             # To be moved to inventory file / groupvars during the actual setup.
+    tomcat_ver: 9.0.30                              # Tomcat version to install
+    ui_manager_user: manager                        # User who can access the UI manager section only
+    ui_manager_pass: Str0ngManagerP@ssw3rd          # Password of the UI manager user. Note currently written as plain text. 
+                                                    # Can be extended to use ansible vault / any other pasword storage mechanism. 
+    ui_admin_username: admin                        # User who can access both manager and admin UI sections
+    ui_admin_pass: Str0ngAdminP@ssw3rd              # Password of admin and UI manager. Hardcoded as plain text but can be extended 
+  tags: webserver
+  roles:
+    - tomcat
+    
+###############################################################################
+#Play to prepare and install Application server on given host                 #
+#This installation is a sample for RHEL flavor which can be extended to       #
+#other OS families                                                            #
+###############################################################################
+- name: Play to install NodeJS applicationserver
+  hosts: <Inventory host / groupname>               # Inventory hosts group / server to act on
+  become: yes                                       # To accquire escalation privileges
+  become_method: sudo                               # Set become method
+  remote_user: root                                 # Update username for remote server
+  tags: applicationserver
+  roles:
+    - nodejs
+    
+###############################################################################
+#Play to prepare and install Database on given host                           #
+#This installation is a sample for RHEL flavor which can be extended to       #
+#other OS families                                                            #
+###############################################################################
+- name: Play to install Database on given host
+  hosts: <Inventory host / groupname>               # Inventory hosts group / server to act on
+  become: yes                                       # To accquire escalation privileges
+  become_method: sudo                               # Set become method
+  remote_user: root                                 # Update username for remote server
+  tags: database
+  roles:
+    - postgre

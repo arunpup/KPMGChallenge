@@ -1,0 +1,69 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: main.yml                                                          #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install NodeJS applicationserver on RHEL.         #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+---
+
+###############################################################################
+#Task to import the setup process                                             #
+###############################################################################
+- name: Importing setup tasks
+  import_tasks: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+###############################################################################
+#Setting up user details for NodeJS                                           #
+###############################################################################
+- name: Define nodejs_install_npm_user
+  set_fact:
+    nodejs_install_npm_user: "{{ ansible_user | default(lookup('env', 'USER')) }}"
+  when: nodejs_install_npm_user is not defined
+
+###############################################################################
+#Creating npm global directory                                                #
+###############################################################################
+- name: Create npm global directory
+  file:
+    path: "{{ npm_config_prefix }}"
+    owner: "{{ nodejs_install_npm_user }}"
+    group: "{{ nodejs_install_npm_user }}"
+    state: directory
+
+###############################################################################
+#Configuring npm by setting up global PATH                                    #
+###############################################################################
+- name: Add npm_config_prefix bin directory to global $PATH.
+  template:
+    src: npm.sh.j2
+    dest: /etc/profile.d/npm.sh
+    mode: 0644
+
+###############################################################################
+#Installation verification of npm packages                                    #
+###############################################################################
+- name: Ensure npm global packages are installed.
+  npm:
+    name: "{{ item.name | default(item) }}"
+    version: "{{ item.version | default('latest') }}"
+    global: true
+    state: latest
+  environment:
+    NPM_CONFIG_PREFIX: "{{ npm_config_prefix }}"
+    NODE_PATH: "{{ npm_config_prefix }}/lib/node_modules"
+    NPM_CONFIG_UNSAFE_PERM: "{{ npm_config_unsafe_perm }}"
+  with_items: "{{ nodejs_npm_global_packages }}"
+  tags: ['skip_ansible_lint']
+
+###############################################################################
+#Installing Addon package for NodeJS                                          #
+###############################################################################
+- name: Install packages defined in a given package.json.
+  npm:
+    path: "{{ nodejs_package_json_path }}"
+  when: nodejs_package_json_path is defined and nodejs_package_json_path

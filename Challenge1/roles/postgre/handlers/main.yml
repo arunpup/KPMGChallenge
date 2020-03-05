@@ -1,0 +1,16 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: main.yml                                                          #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install Postgre on RHEL.                          #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+---
+###############################################################################
+#Handler to reload the Postgre SQL service                                    #
+###############################################################################
+- name: Reload PostgreSQL
+  service: name={{ postgresql_service_name }} state=reloaded

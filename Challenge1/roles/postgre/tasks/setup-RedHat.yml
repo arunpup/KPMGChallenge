@@ -1,0 +1,58 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: setup-RedHat.yml                                                  #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install PostgreSQL on RHEL.                       #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+---
+- name: Set PostgreSQL dotless version fact
+  set_fact:
+    __postgresql_version_dotless: "{{ postgresql_version | replace('.', '') }}"
+    __postgresql_command_sep: "{{ postgresql_version is version('10', '>=') | ternary('-', '') }}"
+
+- name: Check pgdg repository package (RedHat)
+  yum:
+    name: "pgdg-redhat-repo"
+  register: __postgresql_repo_pkg_installed_result
+  ignore_errors: yes
+
+- name: Install pgdg repository package (RedHat)
+  yum:
+    name: >-
+      https://download.postgresql.org/pub/repos/yum/reporpms/{{ postgresql_pgdg_shortfamilies[ansible_distribution]
+        | default("EL") }}-{{ ansible_distribution_major_version }}-{{ ansible_architecture }}/pgdg-{{
+        postgresql_pgdg_families[ansible_distribution] | default("redhat") }}-repo-latest.noarch.rpm
+  register: __postgresql_yum_result
+  until: __postgresql_yum_result is succeeded
+  retries: 5
+  delay: 5
+  when: __postgresql_repo_pkg_installed_result is failed
+
+- name: Install PostgreSQL (RedHat)
+  yum:
+    name: postgresql{{ __postgresql_version_dotless }}-server
+
+- name: Check for pgdata directory
+  stat:
+    path: "{{ postgresql_pgdata }}/base"
+  register: pgdata_stat
+  failed_when: false
+
+- name: Initialize database (RedHat < 7)
+  command: /sbin/service postgresql-{{ postgresql_version }} initdb
+  args:
+    warn: false  # Use of /sbin/service is valid here, ignore lint error
+  when: >-
+    ansible_distribution_major_version is version(7, '<')
+      and (pgdata_stat.stat.isdir is not defined or not pgdata_stat.stat.isdir)
+- name: Initialize database (RedHat >= 7)
+  command: >-
+    /usr/pgsql-{{ postgresql_version }}/bin/postgresql{{ __postgresql_command_sep }}{{
+      __postgresql_version_dotless }}-setup initdb
+  when: >-
+    ansible_distribution_major_version is version(7, '>=')
+      and (pgdata_stat.stat.isdir is not defined or not pgdata_stat.stat.isdir)

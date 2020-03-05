@@ -1,0 +1,16 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: main.yml                                                          #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install Tomcat webserver on RHEL.                 #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+---
+###############################################################################
+#Setting up default variables for this role                                   #
+###############################################################################
+tomcat_archive_url: https://archive.apache.org/dist/tomcat/tomcat-9/v{{ tomcat_ver }}/bin/apache-tomcat-{{ tomcat_ver }}.tar.gz
+tomcat_archive_dest: /tmp/apache-tomcat-{{ tomcat_ver }}.tar.gz

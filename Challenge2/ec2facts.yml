@@ -1,0 +1,41 @@
+###############################################################################
+#Ansible Playbook for KPMG Challenge                                          #
+#File Name: ec2facts.yml                                                      #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To read metadata of EC2 instance and display         #
+#                        the output in JSON format                            #
+###############################################################################
+---
+###############################################################################
+#Play to read ec2 instance metadata and discplay the output in JSON format    #
+###############################################################################
+- name: Play to capture the ec2 instance metadata
+  hosts: localhost                                  # Inventory hosts group / server to act on
+  tasks:
+    ###########################################################################
+    #Gather information about all the EC2 instance                            #
+    #This module also allows user to fetch details for specific instances     #
+    #using filters as given below:                                            #
+    #      EG:                                                                #
+    #        ec2_instance_info:                                               #
+    #             aws_access_key: abced123abc                                 #
+    #             aws_secret_key: abcde123abc                                 #
+    #             ec2_url: https://<domain>.aws.com                           #
+    #             filters:                                                    #
+    #                availability-zone: ap-southeast-2a                       #
+    ###########################################################################
+    - name: Gathering info from all EC2 instance.
+      ec2_instance_info:
+        aws_access_key: abced123abc                     # To be store in ansible vault and retrived from vault during actual excersice
+        aws_secret_key: abcde123abc                     # To be store in ansible vault and retrived from vault during actual excersice
+        ec2_url: https://<domain>.aws.com
+      register: ec2-metadata
+    
+    ###########################################################################
+    #Display EC2 metadata                                                     #
+    ###########################################################################
+    - name: Displaying EC2 metadata.
+      debug:
+        var: ec2-metadata

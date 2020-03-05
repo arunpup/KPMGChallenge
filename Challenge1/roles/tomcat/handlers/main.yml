@@ -1,0 +1,18 @@
+###############################################################################
+#Ansible Role for KPMG Challenge                                              #
+#File Name: main.yml                                                          #
+###############################################################################
+#Developer - Arun Kumar Lakshmi Narayanan                                     #
+###############################################################################
+#Purpose Of The Script : To install Tomcat webserver on RHEL.                 #
+#                        The same role can be extended for different flavor   #
+#                        of OS or different OS families                       #
+###############################################################################
+---
+###############################################################################
+#Handler to restart the Tomcat server / service                               #
+###############################################################################
+- name: Restarting Tomcat Server
+  service:
+    name: tomcat
+    state: restarted
